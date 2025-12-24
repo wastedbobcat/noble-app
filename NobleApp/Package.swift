@@ -8,7 +8,7 @@ let package = Package(
         .macOS(.v10_15)
     ],
     products: [
-        .library(
+        .executable(
             name: "NobleApp",
             targets: ["NobleApp"]
         )
@@ -30,7 +30,7 @@ let package = Package(
         .package(url: "https://github.com/airbnb/lottie-ios.git", from: "4.3.0"),
     ],
     targets: [
-        .target(
+        .executableTarget(
             name: "NobleApp",
             dependencies: [
                 "Alamofire",
