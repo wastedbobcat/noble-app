@@ -1,5 +1,4 @@
 import Foundation
-import FirebaseFirestore
 
 protocol UserServiceProtocol {
     func getUsers(page: Int, limit: Int) async throws -> [User]
@@ -11,59 +10,91 @@ protocol UserServiceProtocol {
 class UserService: UserServiceProtocol {
     static let shared = UserService()
     
-    private let db = Firestore.firestore()
-    private let usersCollection = "users"
-    
     private init() {}
     
     func getUsers(page: Int = 0, limit: Int = 20) async throws -> [User] {
-        // In production, this would include:
-        // - Location-based filtering
-        // - Age range filtering
-        // - Gender preferences
-        // - Users not already swiped
-        // - Distance calculations
-        
-        let snapshot = try await db.collection(usersCollection)
-            .limit(to: limit)
-            .getDocuments()
-        
-        return try snapshot.documents.compactMap { document in
-            try document.data(as: User.self)
-        }
+        // Mock: Return sample users for swiping
+        return [
+            User(
+                id: "user1",
+                phoneNumber: "+1111111111",
+                firstName: "Sarah",
+                lastName: "Johnson",
+                birthDate: Calendar.current.date(byAdding: .year, value: -25, to: Date())!,
+                gender: .female,
+                genderPreference: .male,
+                photos: ["https://picsum.photos/400/600?random=1"],
+                bio: "Love hiking and photography 📸",
+                occupation: "Photographer",
+                education: "Art School",
+                location: Location(latitude: 40.7128, longitude: -74.0060, city: "New York", state: "NY"),
+                interests: ["Photography", "Hiking", "Travel"],
+                isVerified: true,
+                isPremium: false,
+                createdAt: Date(),
+                updatedAt: Date()
+            ),
+            User(
+                id: "user2",
+                phoneNumber: "+2222222222",
+                firstName: "Emily",
+                lastName: "Chen",
+                birthDate: Calendar.current.date(byAdding: .year, value: -27, to: Date())!,
+                gender: .female,
+                genderPreference: .male,
+                photos: ["https://picsum.photos/400/600?random=2"],
+                bio: "Coffee addict ☕ Dog mom 🐕",
+                occupation: "Software Engineer",
+                education: "MIT",
+                location: Location(latitude: 40.7128, longitude: -74.0060, city: "New York", state: "NY"),
+                interests: ["Coffee", "Dogs", "Coding"],
+                isVerified: true,
+                isPremium: true,
+                createdAt: Date(),
+                updatedAt: Date()
+            ),
+            User(
+                id: "user3",
+                phoneNumber: "+3333333333",
+                firstName: "Jessica",
+                lastName: "Williams",
+                birthDate: Calendar.current.date(byAdding: .year, value: -24, to: Date())!,
+                gender: .female,
+                genderPreference: .male,
+                photos: ["https://picsum.photos/400/600?random=3"],
+                bio: "Adventure seeker 🌍",
+                occupation: "Travel Blogger",
+                education: "UCLA",
+                location: Location(latitude: 34.0522, longitude: -118.2437, city: "Los Angeles", state: "CA"),
+                interests: ["Travel", "Writing", "Yoga"],
+                isVerified: true,
+                isPremium: false,
+                createdAt: Date(),
+                updatedAt: Date()
+            )
+        ]
     }
     
     func getUser(id: String) async throws -> User {
-        let document = try await db.collection(usersCollection).document(id).getDocument()
-        
-        guard let user = try? document.data(as: User.self) else {
+        let users = try await getUsers(page: 0, limit: 20)
+        guard let user = users.first(where: { $0.id == id }) else {
             throw UserServiceError.userNotFound
         }
-        
         return user
     }
     
     func updateUser(_ user: User) async throws -> User {
-        try db.collection(usersCollection).document(user.id).setData(from: user)
+        // Mock: Just return the user
         return user
     }
     
     func uploadPhoto(data: Data) async throws -> String {
-        // TODO: Implement Firebase Storage upload
-        // Returns the download URL
-        return ""
+        // Mock: Return a fake URL
+        return "https://picsum.photos/400/600?random=\(Int.random(in: 1...100))"
     }
     
     func updateLocation(userId: String, location: Location) async throws {
-        try await db.collection(usersCollection).document(userId).updateData([
-            "location": [
-                "latitude": location.latitude,
-                "longitude": location.longitude,
-                "city": location.city ?? "",
-                "state": location.state ?? ""
-            ],
-            "lastActive": FieldValue.serverTimestamp()
-        ])
+        // Mock: Do nothing
     }
 }
 

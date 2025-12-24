@@ -1,6 +1,5 @@
 import SwiftUI
 import Combine
-import FirebaseAuth
 import KeychainAccess
 
 @MainActor
@@ -18,8 +17,8 @@ class AuthViewModel: ObservableObject {
     }
     
     private func checkAuthState() {
-        // Check if user is already logged in
-        if Auth.auth().currentUser != nil {
+        // Mock: Check if user was previously logged in
+        if let _ = try? keychain.get("userId") {
             isAuthenticated = true
             loadCurrentUser()
         }
@@ -29,62 +28,58 @@ class AuthViewModel: ObservableObject {
         isLoading = true
         defer { isLoading = false }
         
-        return try await withCheckedThrowingContinuation { continuation in
-            PhoneAuthProvider.provider().verifyPhoneNumber(phoneNumber, uiDelegate: nil) { verificationID, error in
-                if let error = error {
-                    continuation.resume(throwing: error)
-                    return
-                }
-                
-                if let verificationID = verificationID {
-                    // Store verification ID in keychain
-                    try? self.keychain.set(verificationID, key: "verificationID")
-                    continuation.resume(returning: verificationID)
-                }
-            }
-        }
+        // Mock: Return a fake verification ID
+        let verificationID = UUID().uuidString
+        try? keychain.set(verificationID, key: "verificationID")
+        return verificationID
     }
     
     func verifyCode(_ code: String) async throws {
         isLoading = true
         defer { isLoading = false }
         
-        guard let verificationID = try? keychain.get("verificationID") else {
+        guard let _ = try? keychain.get("verificationID") else {
             throw AuthError.missingVerificationID
         }
         
-        let credential = PhoneAuthProvider.provider().credential(
-            withVerificationID: verificationID,
-            verificationCode: code
-        )
+        // Mock: Simulate verification delay
+        try await Task.sleep(nanoseconds: 1_000_000_000)
         
-        try await Auth.auth().signIn(with: credential)
-        isAuthenticated = true
-        loadCurrentUser()
-    }
-    
-    func signInWithApple(credential: AuthCredential) async throws {
-        isLoading = true
-        defer { isLoading = false }
+        // Mock: Create a fake user ID and save it
+        let userId = UUID().uuidString
+        try? keychain.set(userId, key: "userId")
         
-        try await Auth.auth().signIn(with: credential)
         isAuthenticated = true
         loadCurrentUser()
     }
     
     func signOut() {
-        do {
-            try Auth.auth().signOut()
-            isAuthenticated = false
-            currentUser = nil
-            try? keychain.removeAll()
-        } catch {
-            errorMessage = error.localizedDescription
-        }
+        isAuthenticated = false
+        currentUser = nil
+        try? keychain.removeAll()
     }
     
     private func loadCurrentUser() {
-        // TODO: Load user profile from Firestore
+        // Mock: Create a sample user
+        currentUser = User(
+            id: "mock-user-id",
+            phoneNumber: "+1234567890",
+            firstName: "Demo",
+            lastName: "User",
+            birthDate: Date(),
+            gender: .male,
+            genderPreference: .female,
+            photos: [],
+            bio: "This is a demo user",
+            occupation: "Developer",
+            education: "University",
+            location: nil,
+            interests: ["Swift", "iOS", "Dating Apps"],
+            isVerified: true,
+            isPremium: false,
+            createdAt: Date(),
+            updatedAt: Date()
+        )
     }
 }
 

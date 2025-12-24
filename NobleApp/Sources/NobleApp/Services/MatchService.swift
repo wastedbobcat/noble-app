@@ -1,5 +1,4 @@
 import Foundation
-import FirebaseFirestore
 
 protocol MatchServiceProtocol {
     func swipe(userId: String, direction: SwipeDirection) async throws -> Match?
@@ -10,52 +9,19 @@ protocol MatchServiceProtocol {
 class MatchService: MatchServiceProtocol {
     static let shared = MatchService()
     
-    private let db = Firestore.firestore()
-    private let swipesCollection = "swipes"
-    private let matchesCollection = "matches"
-    private let likesCollection = "likes"
-    
     private init() {}
+    
+    private func getCurrentUserId() -> String? {
+        return "mock-user-id"
+    }
     
     func swipe(userId: String, direction: SwipeDirection) async throws -> Match? {
         guard let currentUserId = getCurrentUserId() else {
             throw MatchServiceError.notAuthenticated
         }
         
-        // Record the swipe
-        let swipe = Swipe(
-            id: UUID().uuidString,
-            swiperId: currentUserId,
-            swipedId: userId,
-            direction: direction,
-            createdAt: Date()
-        )
-        
-        try db.collection(swipesCollection).document(swipe.id).setData(from: swipe)
-        
-        // If it's a like or super like, check for match
-        if direction == .right || direction == .up {
-            return try await checkForMatch(with: userId)
-        }
-        
-        return nil
-    }
-    
-    private func checkForMatch(with userId: String) async throws -> Match? {
-        guard let currentUserId = getCurrentUserId() else {
-            throw MatchServiceError.notAuthenticated
-        }
-        
-        // Check if the other user has already liked us
-        let query = db.collection(swipesCollection)
-            .whereField("swiperId", isEqualTo: userId)
-            .whereField("swipedId", isEqualTo: currentUserId)
-            .whereField("direction", in: ["right", "up"])
-        
-        let snapshot = try await query.getDocuments()
-        
-        if !snapshot.documents.isEmpty {
-            // It's a match!
+        // Mock: Randomly create a match sometimes
+        if (direction == .right || direction == .up) && Bool.random() {
             let match = Match(
                 id: UUID().uuidString,
                 user1Id: currentUserId,
@@ -63,69 +29,28 @@ class MatchService: MatchServiceProtocol {
                 matchedAt: Date(),
                 isNew: true
             )
-            
-            try db.collection(matchesCollection).document(match.id).setData(from: match)
-            
-            // Create conversation
-            try await createConversation(for: match)
-            
             return match
         }
         
         return nil
     }
     
-    private func createConversation(for match: Match) async throws {
-        let conversation = Conversation(
-            id: UUID().uuidString,
-            matchId: match.id,
-            participants: [match.user1Id, match.user2Id],
-            lastMessage: nil,
-            unreadCount: 0,
-            createdAt: Date(),
-            updatedAt: Date()
-        )
-        
-        try db.collection("conversations").document(conversation.id).setData(from: conversation)
-    }
-    
     func getMatches() async throws -> [Match] {
-        guard let currentUserId = getCurrentUserId() else {
-            throw MatchServiceError.notAuthenticated
-        }
-        
-        let snapshot = try await db.collection(matchesCollection)
-            .whereField("user1Id", isEqualTo: currentUserId)
-            .order(by: "matchedAt", descending: true)
-            .getDocuments()
-        
-        let snapshot2 = try await db.collection(matchesCollection)
-            .whereField("user2Id", isEqualTo: currentUserId)
-            .order(by: "matchedAt", descending: true)
-            .getDocuments()
-        
-        var matches = try snapshot.documents.compactMap { try $0.data(as: Match.self) }
-        matches.append(contentsOf: try snapshot2.documents.compactMap { try $0.data(as: Match.self) })
-        
-        return matches.sorted { $0.matchedAt > $1.matchedAt }
+        // Mock: Return empty matches for now
+        return []
     }
     
     func getLikes() async throws -> [Like] {
-        guard let currentUserId = getCurrentUserId() else {
-            throw MatchServiceError.notAuthenticated
-        }
-        
-        let snapshot = try await db.collection(likesCollection)
-            .whereField("toUserId", isEqualTo: currentUserId)
-            .order(by: "createdAt", descending: true)
-            .getDocuments()
-        
-        return try snapshot.documents.compactMap { try $0.data(as: Like.self) }
-    }
-    
-    private func getCurrentUserId() -> String? {
-        // TODO: Get from AuthViewModel
-        return "currentUser"
+        // Mock: Return some sample likes
+        return [
+            Like(
+                id: "like1",
+                likerId: "user1",
+                likedId: "mock-user-id",
+                isSuperLike: false,
+                createdAt: Date()
+            )
+        ]
     }
 }
 
@@ -136,9 +61,31 @@ enum MatchServiceError: LocalizedError {
     var errorDescription: String? {
         switch self {
         case .notAuthenticated:
-            return "Please sign in to continue"
+            return "You must be logged in to swipe."
         case .matchFailed:
-            return "Failed to process match"
+            return "Failed to process match. Please try again."
         }
     }
+}
+
+struct Swipe: Codable {
+    let id: String
+    let swiperId: String
+    let swipedId: String
+    let direction: SwipeDirection
+    let createdAt: Date
+}
+
+enum SwipeDirection: String, Codable {
+    case left
+    case right
+    case up  // Super like
+}
+
+struct Like: Identifiable, Codable {
+    let id: String
+    let likerId: String
+    let likedId: String
+    let isSuperLike: Bool
+    let createdAt: Date
 }
