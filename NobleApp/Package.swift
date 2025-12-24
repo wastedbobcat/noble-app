@@ -4,7 +4,8 @@ import PackageDescription
 let package = Package(
     name: "NobleApp",
     platforms: [
-        .iOS(.v17)
+        .iOS(.v17),
+        .macOS(.v10_15)
     ],
     products: [
         .library(
