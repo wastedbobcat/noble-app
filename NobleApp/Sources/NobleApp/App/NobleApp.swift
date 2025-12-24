@@ -1,5 +1,5 @@
 import SwiftUI
-import FirebaseCore
+// import FirebaseCore  // Temporarily disabled - need GoogleService-Info.plist
 
 @main
 struct NobleApp: App {
@@ -7,7 +7,7 @@ struct NobleApp: App {
     @StateObject private var appState = AppState()
     
     init() {
-        FirebaseApp.configure()
+        // FirebaseApp.configure()  // Temporarily disabled - need GoogleService-Info.plist
     }
     
     var body: some Scene {
