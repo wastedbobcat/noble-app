@@ -12,7 +12,7 @@ class MatchService: MatchServiceProtocol {
     private init() {}
     
     private func getCurrentUserId() -> String? {
-        return "mock-user-id"
+        return "currentUser"
     }
     
     func swipe(userId: String, direction: SwipeDirection) async throws -> Match? {
@@ -41,14 +41,15 @@ class MatchService: MatchServiceProtocol {
     }
     
     func getLikes() async throws -> [Like] {
-        // Mock: Return some sample likes
+        // Mock: Return some sample likes using actual Like model
         return [
             Like(
                 id: "like1",
-                likerId: "user1",
-                likedId: "mock-user-id",
+                fromUserId: "1",
+                toUserId: "currentUser",
                 isSuperLike: false,
-                createdAt: Date()
+                createdAt: Date(),
+                isRead: false
             )
         ]
     }
@@ -66,26 +67,4 @@ enum MatchServiceError: LocalizedError {
             return "Failed to process match. Please try again."
         }
     }
-}
-
-struct Swipe: Codable {
-    let id: String
-    let swiperId: String
-    let swipedId: String
-    let direction: SwipeDirection
-    let createdAt: Date
-}
-
-enum SwipeDirection: String, Codable {
-    case left
-    case right
-    case up  // Super like
-}
-
-struct Like: Identifiable, Codable {
-    let id: String
-    let likerId: String
-    let likedId: String
-    let isSuperLike: Bool
-    let createdAt: Date
 }

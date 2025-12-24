@@ -60,26 +60,8 @@ class AuthViewModel: ObservableObject {
     }
     
     private func loadCurrentUser() {
-        // Mock: Create a sample user
-        currentUser = User(
-            id: "mock-user-id",
-            phoneNumber: "+1234567890",
-            firstName: "Demo",
-            lastName: "User",
-            birthDate: Date(),
-            gender: .male,
-            genderPreference: .female,
-            photos: [],
-            bio: "This is a demo user",
-            occupation: "Developer",
-            education: "University",
-            location: nil,
-            interests: ["Swift", "iOS", "Dating Apps"],
-            isVerified: true,
-            isPremium: false,
-            createdAt: Date(),
-            updatedAt: Date()
-        )
+        // Mock: Use the first mock user
+        currentUser = User.mockUsers.first
     }
 }
 
